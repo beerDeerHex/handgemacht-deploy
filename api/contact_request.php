@@ -18,6 +18,13 @@ $data = json_decode($rawData, true);
 // Usage example:
 $mysqli = getDatabaseConnection();
 
+// send a response to the client
+http_response_code(400); // Bad Request
+echo json_encode(['status' => 'error', 'message' => 'Invalid JSON input']);
+exit;
+
+
+
 function getDatabaseConnection(): mysqli {
     $host = 'localhost';
     $db   = 'u237207940_handgemacht';
