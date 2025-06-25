@@ -16,14 +16,14 @@ handgemacht ♥
                 text-gray-700" href="/products/all"> Alle Produkte </a> </li><li> <a class="block py-2 pl-3 pr-4 text-xl font-pompiere  border-b border-gray-100 hover:bg-gray-50
                 text-gray-700" href="/about"> Über mich </a> </li><li> <a class="block py-2 pl-3 pr-4 text-xl font-pompiere  border-b border-gray-100 hover:bg-gray-50
                 text-blue-300 font-bold" href="/contact"> Kontakt </a> </li><li> <a class="block py-2 pl-3 pr-4 text-xl font-pompiere  border-b border-gray-100 hover:bg-gray-50
-                text-gray-700" href="/events"> Veranstaltungen </a> </li> <li> <a href="https://www.facebook.com/HandgemachtClaudiaWild" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="flex items-center gap-2 py-2 pl-3 pr-4 text-gray-500 hover:text-blue-600"> <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 24 24"> <path d="M22.675 0h-21.35C.595 0 0 .592 0 1.326v21.348C0 23.408.595 24 1.325 24h11.495v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.406 24 24 23.408 24 22.674V1.326C24 .592 23.406 0 22.675 0"></path> </svg> </a> </li> </ul> </div> </div> </nav> <main class="w-full h-fit">  <script type="module" src="/_astro/contact.astro_astro_type_script_index_0_lang.JS-IsZXH.js"></script> <div class="w-full flex flex-col items-center justify-center px-2 py-10 lg:px-4"> <p class="font-pompiere text-xl md:text-4xl mb-2 text-center lg:w-1/2 w-11/12">
+                text-gray-700" href="/events"> Veranstaltungen </a> </li> <li> <a href="https://www.facebook.com/HandgemachtClaudiaWild" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="flex items-center gap-2 py-2 pl-3 pr-4 text-gray-500 hover:text-blue-600"> <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 24 24"> <path d="M22.675 0h-21.35C.595 0 0 .592 0 1.326v21.348C0 23.408.595 24 1.325 24h11.495v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.406 24 24 23.408 24 22.674V1.326C24 .592 23.406 0 22.675 0"></path> </svg> </a> </li> </ul> </div> </div> </nav> <main class="w-full h-fit">  <div class="w-full flex flex-col items-center justify-center px-2 py-10 lg:px-4"> <p class="font-pompiere text-xl md:text-4xl mb-2 text-center lg:w-1/2 w-11/12">
 Du hast Fragen, Wünsche oder möchtest ein individuelles Unikat anfragen?
 </p> <p class="font-pompiere text-xl md:text-4xl text-center mb-8 lg:w-1/2 w-11/12">
 Schreib mir einfach über das Kontaktformular – ich freue mich auf deine
       Nachricht!
 </p> <form class="lg:w-4/12 w-11/12 mx-auto bg-white rounded-lg shadow-md p-2 lg:p-6 flex flex-col gap-5 border border-gray-200" id="contact-form"> <input type="hidden" name="form-name" value="contactRequest"> <div> <label for="name" class="block font-pompiere text-xl mb-1">Name</label> <input type="text" id="name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 font-pompiere text-lg"> </div> <div> <label for="email" class="block font-pompiere text-xl mb-1">E-Mail</label> <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 font-pompiere text-lg"> </div> <div> <label for="type" class="block font-pompiere text-xl mb-1">Anliegen</label> <select id="type" name="type" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 font-pompiere text-lg"> <option value="">Bitte wählen…</option> <option value="anfrage">Allgemeine Anfrage</option> <option value="auftrag">Auftragswunsch</option> <option value="feedback">Feedback</option> </select> </div> <div> <label for="message" class="block font-pompiere text-xl mb-1">Nachricht</label> <textarea id="message" name="message" rows="5" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 font-pompiere text-lg resize-y"></textarea> </div> <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-black font-pompiere text-2xl px-6 py-3 rounded border border-gray-300 transition-colors duration-200 shadow">
 Absenden
-</button> </form> <p id="status-message" class="text-green-600 mt-2"></p> </div> <script type="module">
+</button> </form> <p id="status-message" class="text-green-600 mt-2"></p> </div> <script src="https://www.google.com/recaptcha/api.js?render=6LdfVWwrAAAAADmp20Kzo8cV4SdoUvdaBV3fElio"></script> <script type="module">
     const form = document.getElementById("contact-form");
     const status = document.getElementById("status-message");
 
@@ -33,37 +33,35 @@ Absenden
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
 
-      try {
-        // Run reCAPTCHA before sending the request
-        const token = await grecaptcha.execute(
-          "6LdfVWwrAAAAADmp20Kzo8cV4SdoUvdaBV3fElio",
-          {
-            action: "contact_form",
-          },
-        );
+      // Run reCAPTCHA before sending the request
+      grecaptcha.ready(function () {
+        grecaptcha
+          .execute("6LdfVWwrAAAAADmp20Kzo8cV4SdoUvdaBV3fElio", {
+            action: "submit",
+          })
+          .then(function (token) {
+            // Add token to payload
+            data.recaptchaToken = token;
+            const res = fetch(
+              "https://handgemacht-claudiawild.com/contact_request.php",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+              },
+            );
 
-        // Add token to payload
-        data.recaptchaToken = token;
-
-        const res = await fetch("/api/contact", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (res.ok) {
-          status.textContent = "Danke! Deine Nachricht wurde gesendet.";
-          form.reset();
-        } else {
-          status.textContent =
-            "Fehler beim Senden. Bitte versuche es später erneut.";
-        }
-      } catch (error) {
-        status.textContent = "Netzwerkfehler – bitte später erneut versuchen.";
-      }
+            if (res.ok) {
+              status.textContent = "Danke! Deine Nachricht wurde gesendet.";
+              form.reset();
+            } else {
+              status.textContent =
+                "Fehler beim Senden. Bitte versuche es später erneut.";
+            }
+          });
+      });
     });
   </script>  </main> <footer class="bg-white py-6 px-4 border-t border-gray-200 text-sm text-slate-700"> <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6"> <!-- Column 1 --> <div> <h3 class="font-semibold mb-1 text-base text-slate-900">
 Handgemacht
