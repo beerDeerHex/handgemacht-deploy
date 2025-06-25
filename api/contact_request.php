@@ -29,7 +29,7 @@ try {
         "ssss",
         $data['name'],
         $data['email'],
-        $data['request_type'],
+        $data['type'],
         $data['message']
     );
     $stmt->execute();
