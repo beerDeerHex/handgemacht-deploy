@@ -1,33 +1,76 @@
 <?php
 // contact_request.php
 
-// Allow only POST requests
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405); // Method Not Allowed
-    echo json_encode(['status' => 'error', 'message' => 'Only POST allowed']);
-    exit;
-}
-
-// Start of new log entry
+// imports
 require_once __DIR__ . '/utilities/logMessage.php';
 require_once __DIR__ . '/utilities/getDatabaseConnection.php';
 
-logMessage("", true, true);
+logMessage("", true, );
 
-// Create a simple log entry
-logMessage('Message received');
+// Allow only POST requests
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405); // Method Not Allowed
+    echo json_encode(['status' => 'error', 'message' => 'Only POST method is allowed']);
+    logMessage("", false, true);
+    exit;
+}
 
-// Convert the json input to an associative array
+// Get and decode JSON input
 $rawData = file_get_contents('php://input');
 $data = json_decode($rawData, true);
 
-try {
+// Validate JSON format
+if (json_last_error() !== JSON_ERROR_NONE) {
+    logMessage('Invalid JSON received: ' . json_last_error_msg());
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid JSON']);
+    logMessage("", false, true);
+    exit;
+}
 
-    // Connect to the database
+// Required fields and their types
+$requiredFields = [
+    'name' => 'string',
+    'email' => 'string',
+    'type' => 'string',
+    'message' => 'string'
+];
+
+// Validate required fields
+foreach ($requiredFields as $field => $type) {
+    if (!isset($data[$field])) {
+        logMessage("Missing required field: $field");
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => "Missing field: $field"]);
+        logMessage("", false, true);
+        exit;
+    }
+    if (gettype($data[$field]) !== $type || trim($data[$field]) === '') {
+        logMessage("Invalid or empty value for field: $field");
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => "Invalid value for: $field"]);
+        logMessage("", false, true);
+        exit;
+    }
+}
+
+// Validate email format
+if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    logMessage("Invalid email format: {$data['email']}");
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid email address']);
+    logMessage("", false, true);
+    exit;
+}
+
+try {
     $db = getDatabaseConnection();
 
-    // Write the data to the database
     $stmt = $db->prepare("INSERT INTO contact_request (username, email, request_type, content) VALUES (?, ?, ?, ?)");
+    if (!$stmt) {
+        throw new Exception('Prepare failed: ' . $db->error);
+    }
+
     $stmt->bind_param(
         "ssss",
         $data['name'],
@@ -35,19 +78,21 @@ try {
         $data['type'],
         $data['message']
     );
-    $stmt->execute();
+
+    if (!$stmt->execute()) {
+        throw new Exception('Execute failed: ' . $stmt->error);
+    }
+
     $stmt->close();
+    logMessage("Contact request saved successfully for email: {$data['email']}");
+    echo json_encode(['status' => 'success', 'message' => 'Request submitted successfully']);
+    logMessage("", false, true);
 
 } catch (Exception $e) {
-    // Log the error message
     logMessage('Database error: ' . $e->getMessage());
-    
-    // Send a response to the client
-    http_response_code(400); // Error
-    echo json_encode(['status' => 'error', 'message' => 'Database error']);
-    logMessage("", true);
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Internal server error']);
+    logMessage("", false, true);
     exit;
 }
-
-// End of contact_request.php
 ?>
