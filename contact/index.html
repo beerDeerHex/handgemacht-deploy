@@ -42,23 +42,20 @@ Absenden
           .then(async function (token) {
             // Add token to payload
             data.recaptchaToken = token;
-            const res = await fetch(
-              "https://handgemacht-claudiawild.com/contact_request.php",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
+            const res = await fetch("/api/contact_request.php", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
               },
-            );
+              body: JSON.stringify(data),
+            });
 
             if (res.ok) {
               status.textContent = "Danke! Deine Nachricht wurde gesendet.";
               form.reset();
             } else {
               status.textContent =
-                "Fehler beim Senden. Bitte versuche es später erneut.";
+                "Ups, da ist etwas schief gelaufen. Bitte versuche es später erneut!";
             }
           });
       });
