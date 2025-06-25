@@ -9,6 +9,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Start of new log entry
+require_once __DIR__ . '/utilities/logMessage.php';
+require_once __DIR__ . '/utilities/getDatabaseConnection.php';
+
 logMessage("", true, true);
 
 // Create a simple log entry
@@ -44,43 +47,6 @@ try {
     echo json_encode(['status' => 'error', 'message' => 'Database error']);
     logMessage("", true);
     exit;
-}
-
-
-function logMessage($message = "", $seperator = false, $space = false) {
-    $logFile = 'message-log.txt';
-    $timestamp = date('Y-m-d H:i:s');
-    if ($seperator) {
-        if ($space) {
-            file_put_contents($logFile, "\n|-----------------------------------------------------------------------------------------------------------------|\n", FILE_APPEND);
-        } else {
-            file_put_contents($logFile, "\n|-----------------------------------------------------------------------------------------------------------------|\n", FILE_APPEND);
-        }
-    } else {
-        file_put_contents($logFile, "$timestamp - $message\n", FILE_APPEND);
-    }
-}
-
-function getDatabaseConnection(): mysqli {
-    $host = 'localhost';
-    $db   = 'u237207940_handgemacht';
-    $db_user = getenv('DB_USER');
-    $db_pass = getenv('DB_PASS');
-
-    // Create mysqli connection
-    $mysqli = new mysqli($host, $db_user, $db_pass, $db);
-
-    // Check connection
-    if ($mysqli->connect_error) {
-        logMessage("Database connection failed: " . $mysqli->connect_error);
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Database connection failed']);
-        logMessage("", true);
-        exit;
-    }
-
-    logMessage("Database connection established using mysqli.");
-    return $mysqli;
 }
 
 // End of contact_request.php
