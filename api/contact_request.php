@@ -2,10 +2,10 @@
 // contact_request.php
 
 // imports
-require_once __DIR__ . '/utilities/logMessage.php';
-require_once __DIR__ . '/utilities/getDatabaseConnection.php';
+require_once __DIR__ . '../utilities';
+require_once __DIR__ . '../utilities/getDatabaseConnection.php';
 
-logMessage("", true, );
+logMessage("", true);
 
 // Allow only POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -14,6 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     logMessage("", false, true);
     exit;
 }
+
+logMessage("Valid request method: " . $_SERVER['REQUEST_METHOD']);
 
 // Get and decode JSON input
 $rawData = file_get_contents('php://input');
@@ -27,6 +29,32 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     logMessage("", false, true);
     exit;
 }
+
+logMessage("Valid  JSON received");
+
+// Google reCAPTCHA verification
+if (empty($data['recaptchaToken'])) {
+    logMessage('Missing reCAPTCHA token');
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Missing reCAPTCHA token']);
+    logMessage("", false, true);
+    exit;
+}
+$recaptchaSecret = getenv('RECAPTCHA_SECRET');
+$recaptchaToken = $data['recaptchaToken'];
+$recaptchaResponse = file_get_contents(
+    'https://www.google.com/recaptcha/api/siteverify?secret=' . urlencode($recaptchaSecret) . '&response=' . urlencode($recaptchaToken)
+);
+$recaptchaResult = json_decode($recaptchaResponse, true);
+if (empty($recaptchaResult['success']) || !$recaptchaResult['success']) {
+    logMessage('reCAPTCHA verification failed: ' . json_encode($recaptchaResult));
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'reCAPTCHA verification failed']);
+    logMessage("", false, true);
+    exit;
+}
+
+logMessage("reCAPTCHA verification successful");
 
 // Required fields and their types
 $requiredFields = [
@@ -54,6 +82,8 @@ foreach ($requiredFields as $field => $type) {
     }
 }
 
+logMessage("All required fields are present and valid");
+
 // Validate email format
 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
     logMessage("Invalid email format: {$data['email']}");
@@ -62,6 +92,8 @@ if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
     logMessage("", false, true);
     exit;
 }
+
+logMessage("Valid email format");
 
 try {
     $db = getDatabaseConnection();

@@ -1,8 +1,0 @@
-CREATE TABLE contact_request (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username TEXT NOT NULL,
-    email TEXT NOT NULL,
-    request_type TEXT NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
