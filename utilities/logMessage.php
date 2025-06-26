@@ -1,6 +1,6 @@
 <?php
 function logMessage($message = "", $startMessage = false, $endMessage = false) {
-    $logFile = 'message-log.txt';
+    $logFile = 'log.txt';
     $timestamp = date('Y-m-d H:i:s');
     if ($startMessage) {
             file_put_contents($logFile, "\n-----------------------------------------START OF NEW REQUEST-----------------------------------------\n", FILE_APPEND);

@@ -2,8 +2,8 @@
 // contact_request.php
 
 // imports
-require_once __DIR__ . '../utilities';
-require_once __DIR__ . '../utilities/getDatabaseConnection.php';
+require_once __DIR__ . '/utilities/logMessage.php';
+require_once __DIR__ . '/utilities/getDatabaseConnection.php';
 
 logMessage("", true);
 

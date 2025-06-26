@@ -2,8 +2,14 @@
 // email_sender.php - cronjob to process and send contact requests
 
 // imports
-require_once __DIR__ . '../utilities';
-require_once __DIR__ . '../utilities/getDatabaseConnection.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../api/utilities/logMessage.php';
+require_once __DIR__ . '/../api/utilities/getDatabaseConnection.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+logMessage("", true);
 
 date_default_timezone_set('UTC');
 
@@ -13,6 +19,7 @@ try {
     $result = $db->query("SELECT * FROM contact_request ORDER BY id ASC LIMIT 1");
     if (!$result) {
         logMessage('Failed to query contact_request: ' . $db->error);
+        logMessage("", false, true);
         exit;
     }
     if ($result->num_rows === 0) {
@@ -27,13 +34,28 @@ try {
     $content = $row['content'];
 
     // Prepare email
-    $to = getenv('CONTACT_REQUEST_RECEIVER') ?: 'your@email.com';
+    $to = getenv('CONTACT_REQUEST_RECEIVER');
     $subject = "Neue Kontaktanfrage von $username ($type)";
-    $message = "Name: $username\nEmail: $email\nTyp: $type\nNachricht:\n$content";
-    $headers = "From: noreply@" . $_SERVER['SERVER_NAME'];
+    $body = "Name: $username<br>Email: $email<br>Typ: $type<br>Nachricht:<br>" . nl2br($content);
 
-    // Send email
-    if (mail($to, $subject, $message, $headers)) {
+    $mail = new PHPMailer(true);
+    try {
+        // SMTP settings (customize as needed)
+        $mail->isSMTP();
+        $mail->Host = getenv('SMTP_HOST');
+        $mail->SMTPAuth = true;
+        $mail->Username = getenv('SMTP_USER');
+        $mail->Password = getenv('SMTP_PASS');
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = getenv('SMTP_PORT');
+        $mail->setFrom(getenv('SMTP_USER'), 'Kontaktformular');
+        $mail->addAddress($to);
+        $mail->addReplyTo($email, $username);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $body;
+        $mail->AltBody = strip_tags($body);
+        $mail->send();
         // Insert into contact_request_sent
         $stmt = $db->prepare("INSERT INTO contact_request_sent (username, email, request_type, content, sent_at) VALUES (?, ?, ?, ?, NOW())");
         if ($stmt) {
@@ -43,14 +65,18 @@ try {
             // Delete from contact_request
             $db->query("DELETE FROM contact_request WHERE id = " . intval($id));
             logMessage("Contact request from $email sent and archived.");
+            logMessage("", false, true);
         } else {
             logMessage('Failed to insert into contact_request_sent: ' . $db->error);
+            logMessage("", false, true);
         }
-    } else {
-        logMessage("Failed to send email for contact request from $email");
+    } catch (Exception $e) {
+        logMessage("PHPMailer error for $email: " . $mail->ErrorInfo);
+        logMessage("", false, true);
     }
 } catch (Exception $e) {
     logMessage('Cronjob error: ' . $e->getMessage());
+    logMessage("", false, true);
     exit;
 }
 ?>
