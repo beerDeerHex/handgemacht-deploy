@@ -2,9 +2,9 @@
 // email_sender.php - cronjob to process and send contact requests
 
 // imports
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../api/utilities/logMessage.php';
-require_once __DIR__ . '/../api/utilities/getDatabaseConnection.php';
+require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/vendor/autoload.php';
+require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/utilities/logMessage.php';
+require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/utilities/getDatabaseConnection.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
