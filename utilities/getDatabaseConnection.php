@@ -22,3 +22,6 @@ function getDatabaseConnection(): mysqli {
     return $mysqli;
 }
 ?>
+
+DB_USER=your_db_user 
+DB_PASS=your_db_pass /usr/bin/php /home/u237207940/domains/handgemacht-claudiawild.com/public_html/cronjobs/email_sender.php
