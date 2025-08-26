@@ -1,10 +1,16 @@
 <?php
-require_once __DIR__ . '/logMessage.php';
+
+// Define constant before including config
+define('CONFIG_LOADED', true);
+
+require_once '/home/u237207940/domains/handgemacht-claudiawild.com/config.php';
+require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/utilities/logMessage.php';
+
 function getDatabaseConnection(): mysqli {
-    $host = 'localhost';
-    $db   = 'u237207940_handgemacht';
-    $db_user = getenv('DB_USER');
-    $db_pass = getenv('DB_PASS');
+    $host = DB_HOST;
+    $db   = DB_NAME;
+    $db_user = DB_USER;
+    $db_pass = DB_PASS;
 
     // Create mysqli connection
     $mysqli = new mysqli($host, $db_user, $db_pass, $db);
@@ -22,6 +28,3 @@ function getDatabaseConnection(): mysqli {
     return $mysqli;
 }
 ?>
-
-DB_USER=your_db_user 
-DB_PASS=your_db_pass /usr/bin/php /home/u237207940/domains/handgemacht-claudiawild.com/public_html/cronjobs/email_sender.php

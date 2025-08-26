@@ -23,7 +23,7 @@ Schreib mir einfach über das Kontaktformular – ich freue mich auf deine
       Nachricht!
 </p> <form class="lg:w-5/12 w-full mx-auto bg-white rounded-lg shadow-md p-2 lg:p-6 flex flex-col gap-5 border border-gray-200" id="contact-form"> <input type="hidden" name="form-name" value="contactRequest"> <div> <label for="name" class="block font-pompiere text-xl mb-1">Name</label> <input type="text" id="name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 font-pompiere text-lg"> </div> <div> <label for="email" class="block font-pompiere text-xl mb-1">E-Mail</label> <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 font-pompiere text-lg"> </div> <div> <label for="type" class="block font-pompiere text-xl mb-1">Anliegen</label> <select id="type" name="type" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 font-pompiere text-lg"> <option value="">Bitte wählen…</option> <option value="anfrage">Allgemeine Anfrage</option> <option value="auftrag">Auftragswunsch</option> <option value="feedback">Feedback</option> </select> </div> <div> <label for="message" class="block font-pompiere text-xl mb-1">Nachricht</label> <textarea id="message" name="message" rows="5" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 font-pompiere text-lg resize-y"></textarea> </div> <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-black font-pompiere text-2xl px-6 py-3 rounded border border-gray-300 transition-colors duration-200 shadow">
 Absenden
-</button> </form> <p id="status-message" class="text-green-600 mt-2"></p> </div> <script src="https://www.google.com/recaptcha/api.js?render=6LdfVWwrAAAAADmp20Kzo8cV4SdoUvdaBV3fElio"></script> <script type="module">
+</button> </form> <p id="status-message" class="text-green-600 mt-2"></p> </div> <script src="https://www.google.com/recaptcha/api.js?render=6LfwR7MrAAAAAHknEyczRYuxbanugk2-cl7i_aQ-"></script> <script type="module">
     const form = document.getElementById("contact-form");
     const status = document.getElementById("status-message");
 
@@ -36,7 +36,7 @@ Absenden
       // Run reCAPTCHA before sending the request
       grecaptcha.ready(function () {
         grecaptcha
-          .execute("6LdfVWwrAAAAADmp20Kzo8cV4SdoUvdaBV3fElio", {
+          .execute("6LfwR7MrAAAAAHknEyczRYuxbanugk2-cl7i_aQ-", {
             action: "submit",
           })
           .then(async function (token) {

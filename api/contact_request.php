@@ -1,7 +1,11 @@
 <?php
 // contact_request.php
 
+// Define constant before including config
+define('CONFIG_LOADED', true);
+
 // imports
+require_once '/home/u237207940/domains/handgemacht-claudiawild.com/config.php';
 require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/utilities/logMessage.php';
 require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/utilities/getDatabaseConnection.php';
 
@@ -40,7 +44,7 @@ if (empty($data['recaptchaToken'])) {
     logMessage("", false, true);
     exit;
 }
-$recaptchaSecret = getenv('RECAPTCHA_SECRET');
+$recaptchaSecret = RECAPTCHA_SECRET_KEY;
 $recaptchaToken = $data['recaptchaToken'];
 $recaptchaResponse = file_get_contents(
     'https://www.google.com/recaptcha/api/siteverify?secret=' . urlencode($recaptchaSecret) . '&response=' . urlencode($recaptchaToken)

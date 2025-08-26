@@ -1,7 +1,11 @@
 <?php
 // email_sender.php - cronjob to process and send contact requests
 
+// Define constant before including config
+define('CONFIG_LOADED', true);
+
 // imports
+require_once '/home/u237207940/domains/handgemacht-claudiawild.com/config.php';
 require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/vendor/autoload.php';
 require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/utilities/logMessage.php';
 require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/utilities/getDatabaseConnection.php';
