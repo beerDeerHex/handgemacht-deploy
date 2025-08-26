@@ -3,7 +3,7 @@
 // Define constant before including config
 define('CONFIG_LOADED', true);
 
-require_once '/home/u237207940/domains/handgemacht-claudiawild.com/config.php';
+require_once '/home/u237207940/domains/config.php';
 require_once '/home/u237207940/domains/handgemacht-claudiawild.com/public_html/utilities/logMessage.php';
 
 function getDatabaseConnection(): mysqli {
