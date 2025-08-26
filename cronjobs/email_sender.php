@@ -27,7 +27,8 @@ try {
         exit;
     }
     if ($result->num_rows === 0) {
-        // No new entries
+        logMessage('No new contact requests found.');
+        logMessage("", false, true);
         exit;
     }
     $row = $result->fetch_assoc();
