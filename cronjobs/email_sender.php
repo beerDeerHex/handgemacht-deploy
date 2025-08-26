@@ -38,7 +38,7 @@ try {
     $content = $row['content'];
 
     // Prepare email
-    $to = getenv('CONTACT_REQUEST_RECEIVER');
+    $to = CONTACT_REQUEST_RECEIVER;
     $subject = "Neue Kontaktanfrage von $username ($type)";
     $body = "Name: $username<br>Email: $email<br>Typ: $type<br>Nachricht:<br>" . nl2br($content);
 
@@ -46,13 +46,13 @@ try {
     try {
         // SMTP settings (customize as needed)
         $mail->isSMTP();
-        $mail->Host = getenv('SMTP_HOST');
+        $mail->Host = SMTP_HOST;
         $mail->SMTPAuth = true;
-        $mail->Username = getenv('SMTP_USER');
-        $mail->Password = getenv('SMTP_PASS');
+        $mail->Username = SMTP_USER;
+        $mail->Password = SMTP_PASS;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = getenv('SMTP_PORT');
-        $mail->setFrom(getenv('SMTP_USER'), 'Kontaktformular');
+        $mail->Port = SMTP_PORT;
+        $mail->setFrom(SMTP_USER, 'Kontaktformular');
         $mail->addAddress($to);
         $mail->addReplyTo($email, $username);
         $mail->isHTML(true);
