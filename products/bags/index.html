@@ -36,7 +36,7 @@ const numOfPicturesMobile = 34;
   const modalImg = document.getElementById("modal-img");
 
   function openModal(tag, index) {
-    currentIdx = index;
+    currentIdx = Number(index);
     currentTag = tag;
     updateImgSrc();
     modal.classList.remove("hidden");
