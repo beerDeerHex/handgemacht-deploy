@@ -66,6 +66,19 @@ $deployMsg = $_GET['deploy'] ?? '';
         .pending-panel .change-date { color: #9ca3af; font-size: 0.8rem; white-space: nowrap; }
         .pending-panel .deploy-row  { margin-top: 1rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
         .no-pending { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 0.9rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.875rem; color: #6b7280; display: flex; align-items: center; gap: 0.5rem; }
+        /* Pipeline status bar */
+        .pipeline { display: flex; align-items: center; gap: 0.75rem; background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 0.85rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.875rem; }
+        .pipeline-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .dot-none      { background: #d1d5db; }
+        .dot-queued    { background: #f59e0b; }
+        .dot-progress  { background: #3b82f6; animation: pulse 1.2s ease-in-out infinite; }
+        .dot-success   { background: #22c55e; }
+        .dot-failure   { background: #ef4444; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+        .pipeline-label { font-weight: 600; color: #1f2937; }
+        .pipeline-time  { color: #9ca3af; margin-left: auto; font-size: 0.8rem; }
+        .pipeline a     { color: #2563eb; font-size: 0.8rem; text-decoration: none; }
+        .pipeline a:hover { text-decoration: underline; }
         /* Photo section */
         .upload-section { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 1.5rem; margin-top: 2rem; }
         .upload-section h2 { font-size: 1rem; margin-bottom: 1rem; }
@@ -87,6 +100,14 @@ $deployMsg = $_GET['deploy'] ?? '';
     </div>
 </header>
 <main>
+
+    <!-- Live pipeline status -->
+    <div class="pipeline" id="pipeline">
+        <div class="pipeline-dot dot-none" id="pDot"></div>
+        <span class="pipeline-label" id="pLabel">Pipeline-Status wird geladen…</span>
+        <span class="pipeline-time"  id="pTime"></span>
+        <a id="pLink" href="#" target="_blank" style="display:none">GitHub →</a>
+    </div>
 
     <?php if ($deployMsg === 'ok'): ?>
         <div class="alert alert-info">
@@ -181,5 +202,54 @@ $deployMsg = $_GET['deploy'] ?? '';
         </div>
     </div>
 </main>
+<script>
+const STATES = {
+    none:       { dot: 'dot-none',     label: 'Noch kein Deploy durchgeführt' },
+    queued:     { dot: 'dot-queued',   label: '⏳ Deploy in der Warteschlange…' },
+    in_progress:{ dot: 'dot-progress', label: '🔄 Wird gerade deployed…' },
+    success:    { dot: 'dot-success',  label: '✅ Erfolgreich deployed' },
+    failure:    { dot: 'dot-failure',  label: '❌ Deploy fehlgeschlagen' },
+    cancelled:  { dot: 'dot-none',     label: '⚠️ Deploy abgebrochen' },
+};
+
+let pollTimer = null;
+
+async function fetchStatus() {
+    try {
+        const res  = await fetch('/admin/status.php');
+        const data = await res.json();
+
+        const dot   = document.getElementById('pDot');
+        const label = document.getElementById('pLabel');
+        const time  = document.getElementById('pTime');
+        const link  = document.getElementById('pLink');
+
+        // Determine display state
+        let key = data.status === 'completed' ? (data.conclusion ?? 'none') : (data.status ?? 'none');
+        const state = STATES[key] ?? STATES.none;
+
+        dot.className   = 'pipeline-dot ' + state.dot;
+        label.textContent = state.label;
+        time.textContent  = data.updated_at ? 'Zuletzt: ' + data.updated_at : '';
+
+        if (data.run_url) {
+            link.href         = data.run_url;
+            link.style.display = 'inline';
+        }
+
+        // Keep polling while active; slow down once done
+        clearTimeout(pollTimer);
+        if (data.status === 'queued' || data.status === 'in_progress') {
+            pollTimer = setTimeout(fetchStatus, 10000); // every 10s while running
+        } else {
+            pollTimer = setTimeout(fetchStatus, 60000); // every 60s when idle
+        }
+    } catch (e) {
+        setTimeout(fetchStatus, 30000);
+    }
+}
+
+fetchStatus();
+</script>
 </body>
 </html>
