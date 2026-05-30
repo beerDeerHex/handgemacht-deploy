@@ -1,9 +1,10 @@
 <?php
 require_once __DIR__ . '/lib/auth.php';
 require_once __DIR__ . '/lib/github.php';
+require_once __DIR__ . '/lib/layout.php';
 require_login();
 
-$events = read_events();
+$events  = read_events();
 $editing = false;
 $event = [
     'id'              => '',
@@ -40,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $postId      = trim($_POST['event_id'] ?? '');
 
     if (!$name || !$date || !$dateSort) {
-        $error = 'Bitte alle Pflichtfelder ausfüllen.';
+        $error = 'Bitte fülle die Felder mit einem Sternchen (*) aus: Name, Datum und angezeigter Text.';
     } else {
         // Handle image upload
         if (!empty($_FILES['imageFile']['tmp_name'])) {
@@ -48,15 +49,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             $allowed  = ['jpg', 'jpeg', 'png'];
             if (!in_array($ext, $allowed, true)) {
-                $error = 'Nur JPG und PNG Dateien sind erlaubt.';
+                $error = 'Bitte nur JPG- oder PNG-Bilder hochladen.';
             } elseif ($file['size'] > 20 * 1024 * 1024) {
-                $error = 'Die Datei ist zu groß (max. 20 MB).';
+                $error = 'Das Bild ist zu groß (höchstens 20 MB).';
             } else {
                 $finfo    = finfo_open(FILEINFO_MIME_TYPE);
                 $mime     = finfo_file($finfo, $file['tmp_name']);
                 finfo_close($finfo);
                 if (!in_array($mime, ['image/jpeg', 'image/png'], true)) {
-                    $error = 'Ungültiger Dateityp.';
+                    $error = 'Diese Datei scheint kein gültiges Bild zu sein.';
                 } else {
                     $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($file['name'], PATHINFO_FILENAME));
                     $filename = $safeName . '.' . $ext;
@@ -64,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (upload_image('src/images/Veranstaltungen', $filename, $binary)) {
                         $image = $safeName; // stored without extension
                     } else {
-                        $error = 'Bild konnte nicht hochgeladen werden.';
+                        $error = 'Das Bild konnte nicht hochgeladen werden. Bitte versuche es erneut.';
                     }
                 }
             }
@@ -101,69 +102,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (write_events($events, $commitMsg)) {
                 $success = $editing
-                    ? 'Veranstaltung wurde gespeichert.'
-                    : 'Neue Veranstaltung wurde hinzugefügt.';
+                    ? 'Die Veranstaltung wurde gespeichert.'
+                    : 'Die neue Veranstaltung wurde angelegt.';
                 $editing = true;
                 $event   = $newEvent;
             } else {
-                $error = 'Speichern fehlgeschlagen. Bitte GitHub-Token und Einstellungen prüfen.';
+                $error = 'Speichern hat leider nicht geklappt. Bitte versuche es erneut. '
+                       . 'Wenn es weiterhin nicht funktioniert, melde dich bei ' . ADMIN_SUPPORT_NAME . '.';
             }
         }
     }
 }
+
+// Reflects the change we may have just saved.
+$pendingChanges = github_get_pending_changes();
+
+admin_html_head('Handgemacht – Veranstaltung ' . ($editing ? 'bearbeiten' : 'hinzufügen'));
+admin_topbar(['back' => true]);
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Handgemacht – Veranstaltung <?= $editing ? 'bearbeiten' : 'hinzufügen' ?></title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: sans-serif; background: #f3f4f6; color: #1f2937; }
-        header { background: white; border-bottom: 1px solid #e5e7eb; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-        header h1 { font-size: 1.2rem; }
-        .btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; cursor: pointer; border: none; }
-        .btn-primary { background: #1f2937; color: white; }
-        .btn-primary:hover { background: #374151; }
-        .btn-secondary { background: #e5e7eb; color: #1f2937; }
-        .btn-secondary:hover { background: #d1d5db; }
-        main { max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 1.5rem; }
-        h2 { font-size: 1.1rem; margin-bottom: 1.5rem; }
-        .field { margin-bottom: 1.2rem; }
-        label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.3rem; }
-        .hint { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.4rem; }
-        input[type=text], input[type=date], textarea {
-            width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;
-        }
-        textarea { resize: vertical; min-height: 120px; }
-        input[type=file] { padding: 0.4rem 0; }
-        .image-preview { margin-top: 0.5rem; max-height: 150px; max-width: 100%; border-radius: 4px; display: none; }
-        .current-image { font-size: 0.85rem; color: #6b7280; margin-top: 0.3rem; }
-        .actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
-        .alert { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; }
-        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-        .required { color: #dc2626; }
-    </style>
-</head>
-<body>
-<header>
-    <h1>🧶 Handgemacht Admin</h1>
-    <a href="/admin/dashboard.php" class="btn btn-secondary" style="font-size:0.85rem">← Zurück</a>
-</header>
-<main>
+<main class="admin">
+    <h1 class="page"><?= $editing ? '✏️ Veranstaltung bearbeiten' : '➕ Neue Veranstaltung' ?></h1>
+    <p class="section-sub">Felder mit einem Sternchen <span class="required">*</span> müssen ausgefüllt werden.</p>
+
+    <?php if ($error): ?>
+        <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
+    <?php if ($success): ?>
+        <div class="alert alert-success">✅ <?= htmlspecialchars($success) ?></div>
+        <?php render_pending_banner($pendingChanges); ?>
+    <?php endif; ?>
+
     <div class="card">
-        <h2><?= $editing ? 'Veranstaltung bearbeiten' : 'Neue Veranstaltung' ?></h2>
-
-        <?php if ($error): ?>
-            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
-        <?php endif; ?>
-        <?php if ($success): ?>
-            <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-        <?php endif; ?>
-
         <form method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
             <input type="hidden" name="event_id" value="<?= htmlspecialchars($event['id']) ?>">
@@ -176,29 +145,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="field">
-                <label for="date">Datum (Anzeigetext) <span class="required">*</span></label>
-                <p class="hint">Freier Text, der auf der Website angezeigt wird. Z.B. "22. - 23. März 2026"</p>
-                <input type="text" id="date" name="date" required
-                       value="<?= htmlspecialchars($event['date']) ?>"
-                       placeholder="22. - 23. März 2026">
+                <label for="dateSort">Wann findet die Veranstaltung statt? <span class="required">*</span></label>
+                <p class="hint">Wähle das Datum im Kalender. Bei mehreren Tagen wähle den ersten Tag.</p>
+                <input type="date" id="dateSort" name="dateSort" required
+                       value="<?= htmlspecialchars($event['dateSort']) ?>"
+                       onchange="suggestDisplayDate()">
             </div>
 
             <div class="field">
-                <label for="dateSort">Datum (für Sortierung) <span class="required">*</span></label>
-                <p class="hint">Wird für die Sortierung und Zukunft/Vergangenheit-Erkennung verwendet.</p>
-                <input type="date" id="dateSort" name="dateSort" required
-                       value="<?= htmlspecialchars($event['dateSort']) ?>">
+                <label for="date">Datum, wie es auf der Website steht <span class="required">*</span></label>
+                <p class="hint">Wird automatisch vorgeschlagen — du kannst es frei anpassen,
+                    z.B. „22. - 23. März 2026" oder „6. Dezember 2025, 14-19 Uhr".</p>
+                <input type="text" id="date" name="date" required
+                       value="<?= htmlspecialchars($event['date']) ?>"
+                       placeholder="22. - 23. März 2026"
+                       oninput="this.dataset.touched = '1'">
             </div>
 
             <div class="field">
                 <label for="fullDescription">Beschreibung</label>
+                <p class="hint">Optional. Dieser Text erscheint, wenn Besucher auf die Veranstaltung klicken.</p>
                 <textarea id="fullDescription" name="fullDescription"
-                          placeholder="Beschreibe die Veranstaltung..."><?= htmlspecialchars($event['fullDescription'] ?? '') ?></textarea>
+                          placeholder="Beschreibe die Veranstaltung…"><?= htmlspecialchars($event['fullDescription'] ?? '') ?></textarea>
             </div>
 
             <div class="field">
-                <label for="imageFile">Bild hochladen</label>
-                <p class="hint">JPG oder PNG, max. 20 MB. Leer lassen, um das bestehende Bild beizubehalten.</p>
+                <label for="imageFile">Bild</label>
+                <p class="hint">JPG oder PNG, höchstens 20 MB. Leer lassen, um das bestehende Bild zu behalten.</p>
                 <input type="file" id="imageFile" name="imageFile" accept="image/jpeg,image/png"
                        onchange="previewImage(this)">
                 <img id="preview" class="image-preview" alt="Vorschau">
@@ -209,24 +182,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="actions">
-                <button type="submit" class="btn btn-primary">Speichern</button>
-                <a href="/admin/dashboard.php" class="btn btn-secondary">Abbrechen</a>
+                <button type="submit" class="btn btn-primary btn-xl">💾 Speichern</button>
+                <a href="/admin/dashboard.php" class="btn btn-secondary btn-xl">Abbrechen</a>
             </div>
         </form>
     </div>
 </main>
-<script>
+<?php
+admin_html_foot(<<<'JS'
+const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+function suggestDisplayDate() {
+    const picker = document.getElementById('dateSort');
+    const text   = document.getElementById('date');
+    if (!picker.value) return;
+    // Don't overwrite text the user has typed or edited themselves.
+    if (text.value.trim() !== '' && text.dataset.touched === '1') return;
+    if (text.value.trim() !== '' && text.dataset.auto !== '1') return;
+    const [y, m, d] = picker.value.split('-').map(Number);
+    text.value = d + '. ' + MONTHS[m - 1] + ' ' + y;
+    text.dataset.auto = '1';
+}
 function previewImage(input) {
     const preview = document.getElementById('preview');
     if (input.files && input.files[0]) {
         const reader = new FileReader();
-        reader.onload = e => {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-        };
+        reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
         reader.readAsDataURL(input.files[0]);
     }
 }
-</script>
-</body>
-</html>
+JS);
