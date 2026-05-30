@@ -136,10 +136,18 @@ $existingImages = array_values(array_filter($existingImages, function ($f) use (
         /* Image grid */
         .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
         .img-item { position: relative; border-radius: 6px; overflow: hidden; background: #f9fafb; border: 1px solid #e5e7eb; }
-        .img-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+        .img-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; cursor: zoom-in; }
         .img-name { font-size: 0.7rem; color: #6b7280; padding: 0.3rem 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .img-del { position: absolute; top: 4px; right: 4px; background: rgba(220,38,38,0.85); color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; cursor: pointer; line-height: 1.4; }
         .img-del:hover { background: #b91c1c; }
+        .pending-dot { position: absolute; top: 4px; left: 4px; background: #f59e0b; color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 5px; border-radius: 4px; line-height: 1.4; pointer-events: none; }
+        /* Lightbox */
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+        .lightbox.open { display: flex; }
+        .lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        .lightbox-name { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; font-size: 0.85rem; padding: 0.4rem 0.9rem; border-radius: 20px; white-space: nowrap; }
+        .lightbox-pending { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); background: #f59e0b; color: white; font-size: 0.8rem; font-weight: 600; padding: 0.35rem 0.9rem; border-radius: 20px; }
+        .lightbox-close { position: fixed; top: 1rem; right: 1rem; color: white; font-size: 2rem; cursor: pointer; line-height: 1; background: none; border: none; }
         .empty { color: #9ca3af; font-size: 0.9rem; padding: 1rem 0; }
         /* Upload zone */
         .drop-zone { border: 2px dashed #d1d5db; border-radius: 8px; padding: 1.5rem; text-align: center; color: #6b7280; font-size: 0.9rem; cursor: pointer; transition: border-color 0.2s; }
@@ -170,19 +178,27 @@ $existingImages = array_values(array_filter($existingImages, function ($f) use (
         <?php if (empty($existingImages)): ?>
             <p class="empty">Noch keine Bilder in dieser Kategorie.</p>
         <?php else: ?>
-            <?php $activeBranch = admin_branch_exists() ? GITHUB_ADMIN_BRANCH : GITHUB_BRANCH; ?>
+            <?php
+                $activeBranch = admin_branch_exists() ? GITHUB_ADMIN_BRANCH : GITHUB_BRANCH;
+                $pendingNames = github_pending_filenames($repoDir);
+                $base         = 'https://raw.githubusercontent.com/' . GITHUB_OWNER . '/' . GITHUB_REPO . '/' . $activeBranch . '/';
+            ?>
             <div class="img-grid">
             <?php foreach ($existingImages as $img): ?>
                 <?php
-                    $base     = 'https://raw.githubusercontent.com/' . GITHUB_OWNER . '/' . GITHUB_REPO . '/' . $activeBranch . '/';
-                    $fullUrl  = $base . $img['path'];
-                    $thumbUrl = $base . thumb_path($img['path']);
+                    $fullUrl   = $base . $img['path'];
+                    $thumbUrl  = $base . thumb_path($img['path']);
+                    $isPending = isset($pendingNames[$img['name']]);
                 ?>
                 <div class="img-item">
                     <img src="<?= htmlspecialchars($thumbUrl) ?>"
                          alt="<?= htmlspecialchars($img['name']) ?>"
                          loading="lazy"
-                         onerror="this.src='<?= htmlspecialchars($fullUrl) ?>'">
+                         onerror="this.src='<?= htmlspecialchars($fullUrl) ?>'"
+                         onclick="openLightbox('<?= htmlspecialchars($fullUrl, ENT_QUOTES) ?>','<?= htmlspecialchars($img['name'], ENT_QUOTES) ?>',<?= $isPending ? 'true' : 'false' ?>)">
+                    <?php if ($isPending): ?>
+                        <span class="pending-dot" title="Noch nicht live">Ausstehend</span>
+                    <?php endif; ?>
                     <div class="img-name" title="<?= htmlspecialchars($img['name']) ?>"><?= htmlspecialchars($img['name']) ?></div>
                     <form method="POST" onsubmit="return confirm('\"<?= htmlspecialchars(addslashes($img['name'])) ?>\" wirklich löschen?')">
                         <input type="hidden" name="csrf_token"  value="<?= csrf_token() ?>">
@@ -194,6 +210,12 @@ $existingImages = array_values(array_filter($existingImages, function ($f) use (
                 </div>
             <?php endforeach; ?>
             </div>
+            <?php if (!empty($pendingNames)): ?>
+                <p style="margin-top:0.75rem; font-size:0.8rem; color:#92400e">
+                    <span style="background:#f59e0b; color:white; border-radius:3px; padding:1px 5px; font-weight:600">Ausstehend</span>
+                    = hochgeladen, aber noch nicht live. Deploy starten um sie zu veröffentlichen.
+                </p>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
 
@@ -245,6 +267,29 @@ function handleDrop(event) {
     input.files = dt.files;
     showPreviews(input.files);
 }
+
+// Lightbox
+function openLightbox(url, name, isPending) {
+    const lb = document.getElementById('lightbox');
+    document.getElementById('lbImg').src = url;
+    document.getElementById('lbName').textContent = name;
+    const badge = document.getElementById('lbPending');
+    badge.style.display = isPending ? 'block' : 'none';
+    lb.classList.add('open');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lbImg').src = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 </script>
+
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox" onclick="if(event.target===this) closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">×</button>
+    <div id="lbPending" class="lightbox-pending" style="display:none">⏳ Noch nicht live — Deploy ausstehend</div>
+    <img id="lbImg" src="" alt="">
+    <div class="lightbox-name" id="lbName"></div>
+</div>
 </body>
 </html>

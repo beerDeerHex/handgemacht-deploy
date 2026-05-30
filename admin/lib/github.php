@@ -94,11 +94,28 @@ function github_get_file(string $repo_path): ?array {
 }
 
 // Lists files in a directory. Uses admin branch if it exists, otherwise main.
-function github_list_dir(string $repo_path): array {
-    $branch = admin_branch_exists() ? GITHUB_ADMIN_BRANCH : GITHUB_BRANCH;
+// Pass $branch explicitly to target a specific branch.
+function github_list_dir(string $repo_path, ?string $branch = null): array {
+    $branch = $branch ?? (admin_branch_exists() ? GITHUB_ADMIN_BRANCH : GITHUB_BRANCH);
     $result = github_api('GET', '/contents/' . ltrim($repo_path, '/') . '?ref=' . urlencode($branch));
     if (!is_array($result) || isset($result['message'])) return [];
     return array_values(array_filter($result, fn($item) => isset($item['type']) && $item['type'] === 'file'));
+}
+
+// Returns a set of filenames that exist on the admin branch but not on main (or have a
+// different SHA), i.e. images that have been uploaded but not yet deployed.
+function github_pending_filenames(string $repo_path): array {
+    if (!admin_branch_exists()) return [];
+    $mainFiles    = github_list_dir($repo_path, GITHUB_BRANCH);
+    $mainBySha    = array_column($mainFiles, 'sha', 'name');
+    $pendingFiles = github_list_dir($repo_path, GITHUB_ADMIN_BRANCH);
+    $pending      = [];
+    foreach ($pendingFiles as $file) {
+        if (!isset($mainBySha[$file['name']]) || $mainBySha[$file['name']] !== $file['sha']) {
+            $pending[$file['name']] = true;
+        }
+    }
+    return $pending;
 }
 
 // Creates or updates a file on the admin branch (creating the branch first if needed).
