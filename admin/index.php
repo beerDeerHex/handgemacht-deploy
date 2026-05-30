@@ -18,7 +18,7 @@ if (is_rate_limited()) {
     }
     $remaining = MAX_ATTEMPTS - ($_SESSION['login_attempts'] ?? 0);
     $error = is_rate_limited()
-        ? 'Zu viele Fehlversuche. Bitte warte 15 Minuten.'
+        ? 'Zu viele Fehlversuche. Bitte warte 5 Minuten.'
         : "Falsches Passwort. Noch $remaining Versuch(e) übrig.";
 }
 ?>

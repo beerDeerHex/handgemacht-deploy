@@ -90,7 +90,7 @@ $deployMsg = $_GET['deploy'] ?? '';
 
     <?php if ($deployMsg === 'ok'): ?>
         <div class="alert alert-info">
-            🚀 <strong>Deploy gestartet!</strong> GitHub baut die Website neu — das dauert ca. <strong>15 Minuten</strong>.
+            🚀 <strong>Deploy gestartet!</strong> GitHub baut die Website neu — das dauert ca. <strong>5 Minuten</strong>.
         </div>
     <?php elseif ($deployMsg === 'fail'): ?>
         <div class="alert alert-error">
@@ -119,7 +119,7 @@ $deployMsg = $_GET['deploy'] ?? '';
                     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                     <button class="btn btn-deploy" type="submit">🚀 Jetzt deployen</button>
                 </form>
-                <span style="font-size:0.8rem; color:#92400e">Website wird nach dem Deploy in ca. 15 Min. aktualisiert.</span>
+                <span style="font-size:0.8rem; color:#92400e">Website wird nach dem Deploy in ca. 5 Min. aktualisiert.</span>
             </div>
         </div>
     <?php else: ?>

@@ -23,7 +23,7 @@ function require_login(): void {
 }
 
 const MAX_ATTEMPTS  = 5;
-const LOCKOUT_SECS  = 15 * 60; // 15 minutes
+const LOCKOUT_SECS  = 5 * 60; // 5 minutes
 
 function is_rate_limited(): bool {
     $until = $_SESSION['lockout_until'] ?? 0;
