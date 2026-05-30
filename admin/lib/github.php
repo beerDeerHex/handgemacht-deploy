@@ -203,7 +203,8 @@ function create_thumbnail(string $binary, int $maxSize = 300): ?string {
 // Returns the thumbnail repo path for a given original repo path.
 // e.g. src/images/Produkte/Taschen/bag.jpg -> src/images/_thumbs/Produkte/Taschen/bag.jpg
 function thumb_path(string $repo_path): string {
-    return preg_replace('#^src/images/#', 'src/images/_thumbs/', $repo_path);
+    $path = preg_replace('#^src/images/#', 'src/images/_thumbs/', $repo_path);
+    return preg_replace('/\.[^.]+$/', '.jpg', $path);
 }
 
 // Uploads an image and, if GD is available, also uploads a small thumbnail.
