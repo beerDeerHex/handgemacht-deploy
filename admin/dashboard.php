@@ -109,11 +109,7 @@ $deployMsg = $_GET['deploy'] ?? '';
         <a id="pLink" href="#" target="_blank" style="display:none">GitHub →</a>
     </div>
 
-    <?php if ($deployMsg === 'ok'): ?>
-        <div class="alert alert-info">
-            🚀 <strong>Deploy gestartet!</strong> GitHub baut die Website neu — das dauert ca. <strong>5 Minuten</strong>.
-        </div>
-    <?php elseif ($deployMsg === 'fail'): ?>
+    <?php if ($deployMsg === 'fail'): ?>
         <div class="alert alert-error">
             Deploy fehlgeschlagen. Prüfe ob der GitHub-Token die Berechtigung <strong>Actions: Read and write</strong> und <strong>Contents: Read and write</strong> hat.
         </div>
