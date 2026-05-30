@@ -7,13 +7,19 @@ if (is_logged_in()) {
 }
 
 $error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (is_rate_limited()) {
+    $mins = ceil(lockout_seconds_remaining() / 60);
+    $error = "Zu viele Fehlversuche. Bitte warte $mins Minute(n).";
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     if (login($password)) {
         header('Location: /admin/dashboard.php');
         exit;
     }
-    $error = 'Falsches Passwort. Bitte versuche es erneut.';
+    $remaining = MAX_ATTEMPTS - ($_SESSION['login_attempts'] ?? 0);
+    $error = is_rate_limited()
+        ? 'Zu viele Fehlversuche. Bitte warte 15 Minuten.'
+        : "Falsches Passwort. Noch $remaining Versuch(e) übrig.";
 }
 ?>
 <!DOCTYPE html>
@@ -43,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="POST">
         <label for="password">Passwort</label>
         <input type="password" id="password" name="password" autofocus required>
-        <button type="submit">Anmelden</button>
+        <button type="submit" <?= is_rate_limited() ? 'disabled' : '' ?>>Anmelden</button>
     </form>
 </div>
 </body>

@@ -101,8 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (write_events($events, $commitMsg)) {
                 $success = $editing
-                    ? 'Veranstaltung wurde gespeichert. Die Website wird in ca. 1–2 Minuten aktualisiert.'
-                    : 'Neue Veranstaltung wurde hinzugefügt. Die Website wird in ca. 1–2 Minuten aktualisiert.';
+                    ? 'Veranstaltung wurde gespeichert.'
+                    : 'Neue Veranstaltung wurde hinzugefügt.';
                 $editing = true;
                 $event   = $newEvent;
             } else {

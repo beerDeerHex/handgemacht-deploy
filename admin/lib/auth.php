@@ -22,11 +22,34 @@ function require_login(): void {
     }
 }
 
+const MAX_ATTEMPTS  = 5;
+const LOCKOUT_SECS  = 15 * 60; // 15 minutes
+
+function is_rate_limited(): bool {
+    $until = $_SESSION['lockout_until'] ?? 0;
+    if ($until && time() < $until) return true;
+    if ($until && time() >= $until) {
+        // Lockout expired — reset
+        unset($_SESSION['lockout_until'], $_SESSION['login_attempts']);
+    }
+    return false;
+}
+
+function lockout_seconds_remaining(): int {
+    return max(0, ($_SESSION['lockout_until'] ?? 0) - time());
+}
+
 function login(string $password): bool {
+    if (is_rate_limited()) return false;
     if (!defined('ADMIN_PASSWORD_HASH')) return false;
     if (password_verify($password, ADMIN_PASSWORD_HASH)) {
+        unset($_SESSION['login_attempts'], $_SESSION['lockout_until']);
         $_SESSION['admin_logged_in'] = true;
         return true;
+    }
+    $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;
+    if ($_SESSION['login_attempts'] >= MAX_ATTEMPTS) {
+        $_SESSION['lockout_until'] = time() + LOCKOUT_SECS;
     }
     return false;
 }

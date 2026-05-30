@@ -10,10 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     exit;
 }
 
-$events = read_events();
+$events          = read_events();
+$pendingChanges  = github_get_pending_changes();
+$hasPending      = count($pendingChanges) > 0;
 usort($events, fn($a, $b) => strcmp($b['dateSort'], $a['dateSort']));
 
-$now = date('Y-m-d');
+$now       = date('Y-m-d');
+$deployMsg = $_GET['deploy'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -24,13 +27,17 @@ $now = date('Y-m-d');
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; background: #f3f4f6; color: #1f2937; }
-        header { background: white; border-bottom: 1px solid #e5e7eb; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        header { background: white; border-bottom: 1px solid #e5e7eb; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
         header h1 { font-size: 1.2rem; }
+        .header-right { display: flex; gap: 0.5rem; align-items: center; }
         .btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; cursor: pointer; border: none; }
-        .btn-primary { background: #1f2937; color: white; }
-        .btn-primary:hover { background: #374151; }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-danger:hover { background: #b91c1c; }
+        .btn-primary  { background: #1f2937; color: white; }
+        .btn-primary:hover  { background: #374151; }
+        .btn-deploy   { background: #2563eb; color: white; }
+        .btn-deploy:hover   { background: #1d4ed8; }
+        .btn-deploy:disabled { background: #93c5fd; cursor: not-allowed; }
+        .btn-danger   { background: #dc2626; color: white; }
+        .btn-danger:hover   { background: #b91c1c; }
         .btn-secondary { background: #e5e7eb; color: #1f2937; }
         .btn-secondary:hover { background: #d1d5db; }
         .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
@@ -41,10 +48,25 @@ $now = date('Y-m-d');
         td { padding: 0.75rem 1rem; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
         .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-        .badge-future { background: #dcfce7; color: #15803d; }
-        .badge-past { background: #f3f4f6; color: #6b7280; }
+        .badge-future  { background: #dcfce7; color: #15803d; }
+        .badge-past    { background: #f3f4f6; color: #6b7280; }
         .actions { display: flex; gap: 0.5rem; }
-        .notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: #92400e; }
+        .alert { border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.9rem; }
+        .alert-info    { background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; }
+        .alert-success { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
+        .alert-warn    { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+        .alert-error   { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+        /* Pending changes panel */
+        .pending-panel { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid #f59e0b; }
+        .pending-panel h3 { font-size: 0.95rem; margin-bottom: 0.75rem; color: #92400e; }
+        .pending-panel ul { list-style: none; padding: 0; }
+        .pending-panel li { display: flex; justify-content: space-between; align-items: baseline; padding: 0.3rem 0; border-bottom: 1px solid #fef3c7; font-size: 0.875rem; gap: 1rem; }
+        .pending-panel li:last-child { border-bottom: none; }
+        .pending-panel .change-msg  { color: #1f2937; }
+        .pending-panel .change-date { color: #9ca3af; font-size: 0.8rem; white-space: nowrap; }
+        .pending-panel .deploy-row  { margin-top: 1rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+        .no-pending { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 0.9rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.875rem; color: #6b7280; display: flex; align-items: center; gap: 0.5rem; }
+        /* Photo section */
         .upload-section { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 1.5rem; margin-top: 2rem; }
         .upload-section h2 { font-size: 1rem; margin-bottom: 1rem; }
         .upload-section p { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.75rem; }
@@ -56,16 +78,55 @@ $now = date('Y-m-d');
 <body>
 <header>
     <h1>🧶 Handgemacht Admin</h1>
-    <form method="POST" style="display:inline">
-        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-        <input type="hidden" name="action" value="logout">
-        <button class="btn btn-secondary btn-sm" type="submit">Abmelden</button>
-    </form>
+    <div class="header-right">
+        <form method="POST" style="display:inline">
+            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+            <input type="hidden" name="action" value="logout">
+            <button class="btn btn-secondary btn-sm" type="submit">Abmelden</button>
+        </form>
+    </div>
 </header>
 <main>
-    <div class="notice">
-        Nach dem Speichern dauert es ca. <strong>1–2 Minuten</strong>, bis die Änderungen auf der Website sichtbar sind.
-    </div>
+
+    <?php if ($deployMsg === 'ok'): ?>
+        <div class="alert alert-info">
+            🚀 <strong>Deploy gestartet!</strong> GitHub baut die Website neu — das dauert ca. <strong>15 Minuten</strong>.
+        </div>
+    <?php elseif ($deployMsg === 'fail'): ?>
+        <div class="alert alert-error">
+            Deploy fehlgeschlagen. Prüfe ob der GitHub-Token die Berechtigung <strong>Actions: Read and write</strong> und <strong>Contents: Read and write</strong> hat.
+        </div>
+    <?php elseif ($deployMsg === 'nothing'): ?>
+        <div class="alert alert-warn">
+            Keine ausstehenden Änderungen — nichts zu deployen.
+        </div>
+    <?php endif; ?>
+
+    <?php if ($hasPending): ?>
+        <div class="pending-panel">
+            <h3>⏳ Ausstehende Änderungen (noch nicht live)</h3>
+            <ul>
+                <?php foreach ($pendingChanges as $change): ?>
+                    <li>
+                        <span class="change-msg"><?= htmlspecialchars($change['message']) ?></span>
+                        <span class="change-date"><?= htmlspecialchars($change['date']) ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <div class="deploy-row">
+                <form method="POST" action="/admin/deploy.php"
+                      onsubmit="return confirm('Alle <?= count($pendingChanges) ?> Änderung(en) jetzt live schalten?')">
+                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                    <button class="btn btn-deploy" type="submit">🚀 Jetzt deployen</button>
+                </form>
+                <span style="font-size:0.8rem; color:#92400e">Website wird nach dem Deploy in ca. 15 Min. aktualisiert.</span>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="no-pending">
+            ✅ Alles deployed — keine ausstehenden Änderungen.
+        </div>
+    <?php endif; ?>
 
     <div class="toolbar">
         <h2 style="font-size:1.1rem">Veranstaltungen</h2>
@@ -89,11 +150,9 @@ $now = date('Y-m-d');
                 <td><strong><?= htmlspecialchars($event['name']) ?></strong></td>
                 <td style="font-size:0.875rem; color:#6b7280"><?= htmlspecialchars($event['date']) ?></td>
                 <td>
-                    <?php if ($isPast): ?>
-                        <span class="badge badge-past">Vergangen</span>
-                    <?php else: ?>
-                        <span class="badge badge-future">Bevorstehend</span>
-                    <?php endif; ?>
+                    <span class="badge <?= $isPast ? 'badge-past' : 'badge-future' ?>">
+                        <?= $isPast ? 'Vergangen' : 'Bevorstehend' ?>
+                    </span>
                 </td>
                 <td style="font-size:0.8rem; color:#6b7280">
                     <?= $event['image'] ? htmlspecialchars($event['image']) : '—' ?>
@@ -110,8 +169,8 @@ $now = date('Y-m-d');
     </table>
 
     <div class="upload-section">
-        <h2>Produktfotos hochladen</h2>
-        <p>Wähle eine Kategorie, um neue Produktfotos hinzuzufügen. Die Fotos erscheinen automatisch auf der Website.</p>
+        <h2>Fotos verwalten</h2>
+        <p>Fotos hochladen oder löschen — wähle eine Kategorie.</p>
         <div class="category-grid">
             <a href="/admin/upload-image.php?cat=Taschen" class="category-btn">Taschen</a>
             <a href="/admin/upload-image.php?cat=Rucksaecke" class="category-btn">Rucksäcke</a>
